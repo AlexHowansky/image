@@ -26,6 +26,9 @@ Commands:
     make <image>
         Create a new image.
 
+    grep <pattern>
+        Search for <pattern> in the available images.
+
 EOF
     exit 1
 }
@@ -74,6 +77,14 @@ function image_make
     find ${TARGETS} -print > /tmp/${1}.${$}
     diff ${IMAGES}/.base /tmp/${1}.${$} | grep "^> " | cut -c3- > ${IMAGES}/${1}
     rm -f /tmp/${1}.${$}
+}
+
+# Search for files in images.
+function image_grep
+{
+    [ ${#} -eq 1 ] || image_help
+    cd ${IMAGES}
+    grep ${1} *
 }
 
 # If this is the first run, reset the base image and show the help.
