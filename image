@@ -29,6 +29,9 @@ Commands:
     grep <pattern>
         Search for <pattern> in the available images.
 
+    find <file>
+        Determine which image the named file is part of.
+
 EOF
     exit 1
 }
@@ -79,12 +82,20 @@ function image_make
     rm -f /tmp/${1}.${$}
 }
 
-# Search for files in images.
+# Search for patterns in images.
 function image_grep
 {
     [ ${#} -eq 1 ] || image_help
     cd ${IMAGES}
     grep ${1} *
+}
+
+# Fine which image one specific file is in.
+function image_find
+{
+    [ ${#} -eq 1 ] || image_help
+    cd ${IMAGES}
+    grep -l "^${1}$" *
 }
 
 # If this is the first run, reset the base image and show the help.
