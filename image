@@ -1,0 +1,95 @@
+#!/bin/bash
+
+IMAGES=~/.images
+TARGETS="/usr/local/bin /usr/local/etc /usr/local/include /usr/local/lib* /usr/local/sbin /usr/local/share"
+
+# Show help and exit.
+function image_help
+{
+    cat << EOF
+Usage: ${0} <command> [<options>]
+
+Commands:
+
+    help
+        Print this list.
+
+    reset
+        Create a new base image.
+
+    list
+        List available images.
+
+    show <image>
+        Show the contents for the named image.
+
+    make <image>
+        Create a new image.
+
+EOF
+    exit 1
+}
+
+# Create a new base image.
+function image_reset
+{
+    echo "Updating base image."
+    mkdir -p ${IMAGES}
+    find ${TARGETS} -print > ${IMAGES}/.base
+}
+
+# List available images.
+function image_list
+{
+    ls -1 ${IMAGES}
+}
+
+# Show image contents.
+function image_show
+{
+    [ ${#} -eq 1 ] || image_help
+    if [ ! -s ${IMAGES}/${1} ]
+    then
+        echo "No such image '${1}'"
+        exit
+    fi
+    cat ${IMAGES}/${1}
+}
+
+# Make a new image.
+function image_make
+{
+    if [ ! -s ${IMAGES}/.base ]
+    then
+        echo "No base image, run 'image reset' first."
+        exit
+    fi
+    if [ -f ${IMAGES}/${1} ]
+    then
+        echo "An image named '${1}' already exists."
+        exit
+    fi
+    echo "Creating new image."
+    find ${TARGETS} -print > /tmp/${1}.${$}
+    diff ${IMAGES}/.base /tmp/${1}.${$} | grep "^> " | cut -c3- > ${IMAGES}/${1}
+    rm -f /tmp/${1}.${$}
+}
+
+# If this is the first run, reset the base image and show the help.
+if [ ! -d ${IMAGES} ]
+then
+    image_reset
+    echo
+    image_help
+fi
+
+# Figure out what command we're running.
+COMMAND=${1:-help}
+FUNCTION="image_${COMMAND}"
+shift
+
+# If it's unknown, show the help.
+[ "$(type -t ${FUNCTION})" == "function" ] || image_help
+
+# Otherwise, run it.
+${FUNCTION} ${@}
