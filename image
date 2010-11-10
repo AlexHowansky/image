@@ -59,6 +59,7 @@ function image_show
 # Make a new image.
 function image_make
 {
+    [ ${#} -eq 1 ] || image_help
     if [ ! -s ${IMAGES}/.base ]
     then
         echo "No base image, run 'image reset' first."
