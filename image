@@ -76,10 +76,16 @@ function image_make
         echo "An image named '${1}' already exists."
         exit
     fi
-    echo "Creating new image."
     find ${TARGETS} -print > /tmp/${1}.${$}
     diff ${IMAGES}/.base /tmp/${1}.${$} | grep "^> " | cut -c3- > ${IMAGES}/${1}
     rm -f /tmp/${1}.${$}
+    if [ -s ${IMAGES}/${1} ]
+    then
+        echo "New image '${1}' created."
+    else
+        echo "No changes found, no image created."
+        rm -f ${IMAGES}/${1}
+    fi
 }
 
 # Search for patterns in images.
