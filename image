@@ -20,11 +20,15 @@ Commands:
     list
         List available images.
 
+    make <image>
+        Create a new image.
+
     show <image>
         Show the contents for the named image.
 
-    make <image>
-        Create a new image.
+    tarball <image> <destination>
+        Create a tarball of the files in the named image.
+        Specify a destination directory, image will create <image>.tar.xz.
 
     grep <pattern>
         Search for <pattern> in the available images.
@@ -56,8 +60,8 @@ function image_show
     [ ${#} -eq 1 ] || image_help
     if [ ! -s ${IMAGES}/${1} ]
     then
-        echo "No such image '${1}'"
-        exit
+        echo "No such image '${1}'" >&2
+        exit 1
     fi
     cat ${IMAGES}/${1}
 }
@@ -68,13 +72,13 @@ function image_make
     [ ${#} -eq 1 ] || image_help
     if [ ! -s ${IMAGES}/.base ]
     then
-        echo "No base image, run 'image reset' first."
-        exit
+        echo "No base image, run 'image reset' first." >&2
+        exit 1
     fi
     if [ -f ${IMAGES}/${1} ]
     then
-        echo "An image named '${1}' already exists."
-        exit
+        echo "An image named '${1}' already exists." >&2
+        exit 1
     fi
     find ${TARGETS} -print > /tmp/${1}.${$}
     diff ${IMAGES}/.base /tmp/${1}.${$} | grep "^> " | cut -c3- > ${IMAGES}/${1}
@@ -85,6 +89,28 @@ function image_make
     else
         echo "No changes found, no image created."
         rm -f ${IMAGES}/${1}
+    fi
+}
+
+# Make a backup of the files in an image.
+function image_tarball
+{
+    [ ${#} -eq 2 ] || image_help
+    if [ ! -s ${IMAGES}/${1} ]
+    then
+        echo "No such image '${1}'" >&2
+        exit 1
+    fi
+    if [ ! -d ${2} ]
+    then
+        echo "No such directory '${2}'" >&2
+        exit 1
+    fi
+    tar --create --xz --file ${2}/${1}.tar.xz --files-from ${IMAGES}/${1} 2>/dev/null
+    if [ ! -s ${2}/${1}.tar.xz ]
+    then
+        echo "Tarball create failed." >&2
+        exit 1
     fi
 }
 
